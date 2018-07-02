@@ -65,7 +65,15 @@ class FinamData:
         self.d_spline420 = float(elements[45])
         self.d_spline1050 = float(elements[46])
 
-    def lp(self, pers = 0.05, d_pers = 0.001):
+        self.prev_signal = 0
+
+    def lp(self, pers = 0.05, d_pers = 0.001, v = 0):
+
+        if v == 1:
+            return [
+
+            ]
+
         r = [
 
             #float((self.time - 40000 - self.m_time)) / 80000,
@@ -141,26 +149,40 @@ class FinamData:
             (self.close - self.spline210) / self.close / pers,
             (self.close - self.spline420) / self.close / pers,
             (self.close - self.spline1050) / self.close / pers,
+            self.prev_signal,
         ]
 
         #print(r)
 
         return r
 
-    def ap(self):
-        return [
-            self.signal*0.8
-        ]
+    def ap(self, v = 0):
+        if v == 1:
+            if self.signal > 0:
+                return [1]
+            else:
+                return [0]
+        else:
+            return [
+                self.signal*0.8
+            ]
 
 
 def LoadFile(path):
     f = open(path, 'r')
     fc = []
     i = 0
+
+    prev_signal = 0
+
     for line in f.readlines():
         if i > 0:
 
             l = FinamData(line)
+
+            l.prev_signal = prev_signal
+
+            prev_signal = l.signal
 
             fc.append(l)
 

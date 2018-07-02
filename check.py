@@ -47,7 +47,7 @@ fd.WriteToFileStudy(fc, "check.test.txt")
 
 # Check
 
-dir_n = 'models_arch/'
+dir_n = 'models_arch/v2_'
 
 pers = 0.05
 
@@ -57,12 +57,15 @@ fc = fs.LoadFile("check.test.txt")
 
 model = fs.LoadModel(dir_n)
 
+last_signal = 0
 for i in range(0, len(fc)):
     ld_s = []
+    fc[i].prev_signal = last_signal
     ld_s.append(fc[i].lp(pers))
     X = np.array(ld_s)
     y = model.predict(X)
     fc[i].signal_ext = y[0][0]
+    #last_signal = y[0][0]
     #if i> 0 and fc[i].date != fc[i - 1].date:
     #    fc[i-1].signal = 0
     #    fc[i-1].signal_ext = 0

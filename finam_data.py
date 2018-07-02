@@ -377,7 +377,7 @@ def CalcSignalV2(fc, commision_calc, p_steps = 60, in_market_mult = 2, out_marke
     return fc
 
 
-def SignalResultCalc(fc, commision_display, delta = 0.2):
+def SignalResultCalc(fc, commision_display, delta = 0.4):
     v = 0
     v_ext = 0
     for i in range(0, len(fc)):
