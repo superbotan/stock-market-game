@@ -32,16 +32,17 @@ commision_display = float(0.001)
 # learn period
 evening_step = 5*10000
 
-fc = fd.LoadFile("US1.MU_180101_180701.test.txt")
+fc = fd.LoadFile("SPBEX.AMD_180101_180701.txt")
 
 fc = fd.RecalcSplines(fc)
 
-fc = fd.CalcSignalV1(fc, intervals_ct, morning_step, commision_calc)
+#fc = fd.CalcSignalV1(fc, intervals_ct, morning_step, commision_calc)
+fc = fd.CalcSignalV2(fc, commision_calc)
 
 
 
 
-fd.WriteToFileStudy(fc, "check.test.txt", morning_step, evening_step, min_step)
+fd.WriteToFileStudy(fc, "check.test.txt")
 
 
 # Check
@@ -62,9 +63,9 @@ for i in range(0, len(fc)):
     X = np.array(ld_s)
     y = model.predict(X)
     fc[i].signal_ext = y[0][0]
-    if i> 0 and fc[i].date != fc[i - 1].date:
-        fc[i-1].signal = 0
-        fc[i-1].signal_ext = 0
+    #if i> 0 and fc[i].date != fc[i - 1].date:
+    #    fc[i-1].signal = 0
+    #    fc[i-1].signal_ext = 0
 
 
 

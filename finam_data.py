@@ -12,6 +12,8 @@ class FinamData:
         self.close = float(elements[7])
         self.vol = int(elements[8])
 
+        self.need_for_study = 0
+
 def LoadFile(path):
     f = open(path, 'r')
     fc = []
@@ -37,10 +39,12 @@ def RecalcSplines(fc):
     vol_n = 0
 
     for i in range(0, len(fc)):
+        fc[i].is_new_day = 0
         if (cur_date < fc[i].date and fc[i].time > 30000):
             cur_start_time = fc[i].time
             cur_date = fc[i].date
             start_val = fc[i].close
+            fc[i].is_new_day = 1
 
         if (fc[i].vol > vol_max):
             vol_max = fc[i].vol
@@ -100,12 +104,17 @@ def CalcSignalV1(fc, intervals_ct, morning_step, commision_calc):
         fc[i].signal_ext = 0
         signal = 0
         if (fc[i].time == (fc[i].morning_start + morning_step)):
+            fc[i].need_for_study = 1
             current_min_ext = fc[i].close
             current_max_ext = fc[i].close
             current_time = fc[i].time
             ku = i
             kd = i
             k = i
+
+            for j in range(i + 1, i + intervals_ct):
+                fc[j].need_for_study = 1
+
             for j in range(i + 1, i + intervals_ct):
                 if (current_min_ext > fc[j].close):
                     current_min_ext = fc[j].close
@@ -209,6 +218,164 @@ def CalcSignalV1(fc, intervals_ct, morning_step, commision_calc):
                             m = m + 1
                             continue
     return fc
+
+def CalcSignalV2(fc, commision_calc, p_steps = 60, in_market_mult = 2, out_market_mult = 1):
+    min_z = fc[0].close
+    i_min_z = 0
+    max_z = fc[0].close
+    i_max_z = 0
+
+    in_market = 0
+
+    for i in range(0, len(fc)):
+        fc[i].signal_ext = 0
+        fc[i].need_for_study = 1
+
+        if fc[i].close < min_z:
+            min_z = fc[i].close
+            i_min_z = i
+        if fc[i].close > max_z:
+            max_z = fc[i].close
+            i_max_z = i
+
+        if in_market == 0:
+            if ((fc[i].close - min_z) / fc[i].close) >  commision_calc * in_market_mult:
+                in_market = 1
+                fc[i].signal = 1
+                for j in range(i_min_z, i):
+                    fc[j].signal = 1
+
+                i_min_z = i
+                min_z = fc[i].close
+
+                i_max_z = i
+                max_z = fc[i].close
+
+            if ((max_z - fc[i].close) / fc[i].close) >  commision_calc * in_market_mult:
+                in_market = -1
+                fc[i].signal = -1
+                for j in range(i_max_z, i):
+                    fc[j].signal = -1
+
+                i_min_z = i
+                min_z = fc[i].close
+
+                i_max_z = i
+                max_z = fc[i].close
+
+            if fc[i].close <= min_z:
+                min_z = fc[i].close
+                i_min_z = i
+            if fc[i].close >= max_z:
+                max_z = fc[i].close
+                i_max_z = i
+
+            if in_market == 0:
+                if (i - i_min_z) > p_steps:
+                    min_z = fc[i].close
+                    i_min_z = i
+                    for j in range (i - p_steps, i):
+                        if fc[j].close < min_z:
+                            min_z = fc[j].close
+                            i_min_z = j
+
+                if (i - i_max_z) > p_steps:
+                    max_z = fc[i].close
+                    i_max_z = i
+                    for j in range (i - p_steps, i):
+                        if fc[j].close > max_z:
+                            max_z = fc[j].close
+                            i_max_z = j
+            continue
+
+        if in_market == 1:
+            fc[i].signal = 1
+            if ((max_z - fc[i].close) / fc[i].close) >  commision_calc * out_market_mult:
+                in_market = 0
+                fc[i].signal = 0
+                for j in range(i_max_z, i):
+                    fc[j].signal = 0
+
+                min_z = fc[i].close
+                i_min_z = i
+                for j in range(i_max_z, i):
+                    if fc[j].close < min_z:
+                        min_z = fc[j].close
+                        i_min_z = j
+
+                i_max_z = i
+                max_z = fc[i].close
+
+            if in_market == 1:
+                if (i - i_min_z) > p_steps:
+                    min_z = fc[i].close
+                    i_min_z = i
+                    for j in range (i - p_steps, i):
+                        if fc[j].close < min_z:
+                            min_z = fc[j].close
+                            i_min_z = j
+
+                if (i - i_max_z) > p_steps:
+                    in_market = 0
+                    fc[i].signal = 0
+                    for j in range(i_max_z, i):
+                        fc[j].signal = 0
+
+                    max_z = fc[i].close
+                    i_max_z = i
+                    for j in range (i - p_steps, i):
+                        if fc[j].close > max_z:
+                            max_z = fc[j].close
+                            i_max_z = j
+
+            continue
+
+        if in_market == -1:
+            fc[i].signal = -1
+            if ((fc[i].close - min_z) / fc[i].close) >  commision_calc * out_market_mult:
+                in_market = 0
+                fc[i].signal = 0
+                for j in range(i_min_z, i):
+                    fc[j].signal = 0
+
+                max_z = fc[i].close
+                i_max_z = i
+                for j in range(i_min_z, i):
+                    if fc[j].close > max_z:
+                        max_z = fc[j].close
+                        i_max_z = j
+
+                i_min_z = i
+                min_z = fc[i].close
+
+            if in_market == 1:
+                if (i - i_min_z) > p_steps:
+                    in_market = 0
+                    fc[i].signal = 0
+                    for j in range(i_min_z, i):
+                        fc[j].signal = 0
+
+                    min_z = fc[i].close
+                    i_min_z = i
+                    for j in range(i - p_steps, i):
+                        if fc[j].close < min_z:
+                            min_z = fc[j].close
+                            i_min_z = j
+
+                if (i - i_max_z) > p_steps:
+                    max_z = fc[i].close
+                    i_max_z = i
+                    for j in range(i - p_steps, i):
+                        if fc[j].close > max_z:
+                            max_z = fc[j].close
+                            i_max_z = j
+            continue
+
+    #for i in range(len(fc)-1, 5, -1):
+    #    fc[i].signal = fc[i - 4].signal
+
+    return fc
+
 
 def SignalResultCalc(fc, commision_display, delta = 0.2):
     v = 0
@@ -317,7 +484,7 @@ def WriteToFileCalcresults(fc, path):
     f_out.close()
 
 
-def WriteToFileStudy(fc, path, morning_step, evening_step, min_step):
+def WriteToFileStudy(fc, path):
     f_out = open(path, 'w')
 
     f_out.write('\t')
@@ -381,9 +548,9 @@ def WriteToFileStudy(fc, path, morning_step, evening_step, min_step):
     v = 0
 
     for i in range(0, len(fc)):
-        if i > 8 and fc[i - 1].spline1050 > 0 \
-                and fc[i].time >= fc[i].morning_start + morning_step \
-                and fc[i].time <= fc[i].morning_start + morning_step + evening_step - min_step:
+        if i >= 8 \
+                and fc[i].need_for_study == 1 \
+                and fc[i-1].spline1050 > 0:
             f_out.write('\t')
             f_out.write('\t')
             f_out.write(str(fc[i].date) + '\t')

@@ -32,7 +32,7 @@ for i in range (0, 100):
         model = Sequential()
         model.add(Dense(30, input_dim=35))
         model.add(Activation('tanh'))
-        model.add(Dense(5))
+        model.add(Dense(20))
         model.add(Activation('tanh'))
         model.add(Dense(3))
         model.add(Activation('tanh'))

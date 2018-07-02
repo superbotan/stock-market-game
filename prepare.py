@@ -17,17 +17,17 @@ commision_calc = float(0.003)
 # commission for display
 commision_display = float(0.001)
 
-# learn period
-evening_step = 5*10000
 
-fc = fd.LoadFile("US1.MU_170101_180101.test.txt")
+#fc = fd.LoadFile("US1.MU_170101_180101.test.txt")
+fc = fd.LoadFile("SPBEX.AMD_170101_180101.txt")
 
 fc = fd.RecalcSplines(fc)
 
-fc = fd.CalcSignalV1(fc, intervals_ct, morning_step, commision_calc)
+#fc = fd.CalcSignalV1(fc, intervals_ct, morning_step, commision_calc)
+fc = fd.CalcSignalV2(fc, commision_calc)
 
 fc = fd.SignalResultCalc(fc, commision_display)
 
 fd.WriteToFileCalcresults(fc, "res.test.txt")
 
-fd.WriteToFileStudy(fc, "study.test.txt", morning_step, evening_step, min_step)
+fd.WriteToFileStudy(fc, "study.test.txt")
